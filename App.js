@@ -1,27 +1,20 @@
-import { View, Text, Image , ImageBackground, ScrollView, Button, Pressable} from "react-native";
-const logoImg = require("./assets/pokeball-png-45334.png")
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import HomeScreen from "./screens/HomeScreen";
+import Pokedex from './screens/Pokedex';
+import Profile from './screens/Profile';
 
+
+const Stack = createNativeStackNavigator()
 
 export default function App() {
   return (
-
-    // this will show the same of the app in a pikachu colorway and will add the background
-  <View style={{flex: 1, backgroundColor: "#F0EAD6", padding: 100 }}>
-
-
-    {/* <Text>
-      <Text style={{ color: "#e92929" }}>Po</Text>
-      <Text style={{ color: "#f4dc26" }}>keA</Text>
-      <Text style={{ color: "#e92929" }}>pp</Text>
-    </Text> */}
-
-
-    <Button title="Login" onPress={() => console.log("Welcome")} color="#e92929"/>
-
-    
-    <ImageBackground source={logoImg} style={{flex: 20 }}></ImageBackground>
-    {/* <Image source={logoImg} style={{ width: 200, height: 200 }}/> */}
-
-  </View>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName='HomeScreen'>
+        <Stack.Screen name="HomeScreen" component={HomeScreen}/>
+        <Stack.Screen name="Pokedex" component={Pokedex}/>
+        <Stack.Screen name="Profile" component={Profile}/>
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
