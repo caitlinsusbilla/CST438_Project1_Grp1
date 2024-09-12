@@ -9,6 +9,7 @@ export default function HomeScreen({ navigation }) {
             <Button title="Create Account" onPress={() => console.log("Welcome")} color="#e92929"/>
             <Button title="Go to Pokedex" onPress={() => navigation.navigate("Pokedex")}/>
             <Button title="Profile" onPress={() => navigation.navigate("Profile")}/>
+            <Button title="My Party" onPress={() => navigation.navigate("MyParty")}/>
         </View>
     );
 }
