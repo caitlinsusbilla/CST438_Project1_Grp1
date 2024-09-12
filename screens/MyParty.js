@@ -51,6 +51,7 @@ export default function MyParty() {
       <Image source={{ uri: item.image }} style={styles.pokemonImage} />
       <Text style={styles.pokemonName}>{item.name}</Text>
     </View>
+
   );
 
   const paginatedPokemon = pokemon.slice(
