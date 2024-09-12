@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from "./screens/HomeScreen";
 import Pokedex from './screens/Pokedex';
 import Profile from './screens/Profile';
+import MyParty from './screens/MyParty';
 import { initDatabase } from './utils/database';
 
 const Stack = createNativeStackNavigator()
@@ -21,6 +22,7 @@ export default function App() {
         <Stack.Screen name="HomeScreen" component={HomeScreen}/>
         <Stack.Screen name="Pokedex" component={Pokedex}/>
         <Stack.Screen name="Profile" component={Profile}/>
+        <Stack.Screen name="MyParty" component={MyParty}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
