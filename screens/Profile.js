@@ -1,14 +1,126 @@
-import React from 'react';
-import { View, Text } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, Image, StyleSheet, Dimensions } from 'react-native';
+import { insertPokemon, getAllPokemon } from '../utils/database';
+
+const { width } = Dimensions.get('window');
+const COLUMN_WIDTH = width / 2;
 
 export default function Profile() {
+    const [pokemon, setPokemon] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1);
+
+    useEffect(() => {
+        fetchPokemon();
+    }, []);
+
+    const fetchPokemon = async () => {
+        try {
+            const localPokemon = await getAllPokemon();
+            if (localPokemon.length > 0) {
+                setPokemon(localPokemon.slice(0,6));
+            } else {
+                const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=6');
+                const data = await response.json();
+                const pokemonDetails = await Promise.all(
+                data.results.map(async (p) => {
+                    const detailResponse = await fetch(p.url);
+                    const detail = await detailResponse.json();
+                    const newPokemon = {
+                        id: detail.id,
+                        name: detail.name,
+                        types: detail.types.map(t => t.type.name),
+                        image: detail.sprites.front_default,
+                        height: detail.height,
+                        weight: detail.weight,
+                        abilities: detail.abilities.map(a => a.ability.name)
+                    };
+                    await insertPokemon(newPokemon);
+                    return newPokemon;
+                })
+            );
+            setPokemon(pokemonDetails);
+          }
+        } catch (error) {
+            console.error('Error fetching Pokemon:', error);
+        }
+    };
+    
+    const renderPokemonItem = ({ item }) => (
+        <View style={styles.pokemonItem}>
+            <Image source={{ uri: item.image }} style={styles.pokemonImage} />
+            <Text style={styles.pokemonName}>{item.name}</Text>
+        </View>
+    );
+
+
     return (
-        <View>
-            {/* Specifications
-            -- Name
-            -- Party
-            -- Bio */}
-            <Text>Profile</Text>
+        <View style={styles.container}>
+            <Text style={styles.username}>Username</Text>
+            <Text style={styles.bio}>Insert bio here{"\n"}Multiple lines yippie
+            </Text>
+            <Text style={styles.subhead}>Username's Party</Text>
+            <FlatList
+            data={pokemon}
+            renderItem={renderPokemonItem}
+            keyExtractor={(item) => item.id.toString()}
+            numColumns={2}
+            columnWrapperStyle={styles.row}
+            />
         </View>
     );
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#f0f0f0',
+        padding: 25,
+    },
+    row: {
+        justifyContent: 'space-around',
+    },
+    username: {
+        fontSize: 30,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        paddingBottom: 10,
+    },
+
+    bio: {
+        fontSize: 17,
+        lineHeight: 30,
+        textAlign: 'center',
+        paddingBottom: 10,
+    },
+    pokemonItem: {
+        width: COLUMN_WIDTH - 40,
+        alignItems: 'center',
+        marginBottom: 20,
+        backgroundColor: 'white',
+        borderRadius: 10,
+        padding: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+    pokemonImage: {
+        width: 100,
+        height: 100,
+        resizeMode: 'contain',
+    },
+    pokemonName: {
+        marginTop: 10,
+        textAlign: 'center',
+        textTransform: 'capitalize',
+        fontWeight: 'bold',
+    },
+    subhead: {
+        textTransform: 'uppercase',
+        fontWeight: 'bold',
+        color: '#222',
+        paddingVertical: 10,
+        paddingLeft: 7,
+    },
+})
