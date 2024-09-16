@@ -6,6 +6,7 @@ import Pokedex from './screens/Pokedex';
 import Profile from './screens/Profile';
 import MyParty from './screens/MyParty';
 import { initDatabase } from './utils/database';
+import DatabaseViewScreen from './screens/DatabaseViewScreen';
 
 const Stack = createNativeStackNavigator()
 
@@ -23,6 +24,7 @@ export default function App() {
         <Stack.Screen name="Pokedex" component={Pokedex}/>
         <Stack.Screen name="Profile" component={Profile}/>
         <Stack.Screen name="MyParty" component={MyParty}/>
+        <Stack.Screen name="DatabaseView" component={DatabaseViewScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

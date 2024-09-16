@@ -1,27 +1,24 @@
 import * as SQLite from 'expo-sqlite';
 
-const db = SQLite.openDatabase('pokemon.db');
+const db = SQLite.openDatabase('pokemon_app.db');
 
 export const initDatabase = () => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
-        `CREATE TABLE IF NOT EXISTS pokemon (
-          id INTEGER PRIMARY KEY NOT NULL,
-          name TEXT NOT NULL,
-          types TEXT NOT NULL,
-          image TEXT NOT NULL,
-          height INTEGER NOT NULL,
-          weight INTEGER NOT NULL,
-          abilities TEXT NOT NULL
+        `CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          username TEXT UNIQUE NOT NULL,
+          email TEXT UNIQUE NOT NULL,
+          password TEXT NOT NULL
         );`,
         [],
         () => {
-          console.log('Database initialized');
+          console.log('Users table initialized');
           resolve();
         },
         (_, error) => {
-          console.error('Error initializing database:', error);
+          console.error('Error initializing users table:', error);
           reject(error);
         }
       );
@@ -29,27 +26,18 @@ export const initDatabase = () => {
   });
 };
 
-export const insertPokemon = (pokemon) => {
+export const createUser = (username, email, password) => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
-        `INSERT OR REPLACE INTO pokemon (id, name, types, image, height, weight, abilities) 
-         VALUES (?, ?, ?, ?, ?, ?, ?);`,
-        [
-          pokemon.id,
-          pokemon.name,
-          JSON.stringify(pokemon.types),
-          pokemon.image,
-          pokemon.height,
-          pokemon.weight,
-          JSON.stringify(pokemon.abilities)
-        ],
+        'INSERT INTO users (username, email, password) VALUES (?, ?, ?);',
+        [username, email, password],
         (_, result) => {
-          console.log('Pokemon inserted:', pokemon.name);
-          resolve(result);
+          console.log('User created:', username);
+          resolve(result.insertId);
         },
         (_, error) => {
-          console.error('Error inserting pokemon:', error);
+          console.error('Error creating user:', error);
           reject(error);
         }
       );
@@ -57,24 +45,21 @@ export const insertPokemon = (pokemon) => {
   });
 };
 
-export const getPokemon = (id) => {
+export const loginUser = (username, password) => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
-        'SELECT * FROM pokemon WHERE id = ?;',
-        [id],
+        'SELECT id, username, email FROM users WHERE username = ? AND password = ?;',
+        [username, password],
         (_, { rows }) => {
           if (rows.length > 0) {
-            const pokemon = rows.item(0);
-            pokemon.types = JSON.parse(pokemon.types);
-            pokemon.abilities = JSON.parse(pokemon.abilities);
-            resolve(pokemon);
+            resolve(rows.item(0));
           } else {
             resolve(null);
           }
         },
         (_, error) => {
-          console.error('Error getting pokemon:', error);
+          console.error('Error logging in:', error);
           reject(error);
         }
       );
@@ -82,22 +67,35 @@ export const getPokemon = (id) => {
   });
 };
 
-export const getAllPokemon = () => {
+export const getAllUsers = () => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
-        'SELECT * FROM pokemon;',
+        'SELECT id, username FROM users;',
         [],
         (_, { rows }) => {
-          const pokemon = rows._array.map(p => ({
-            ...p,
-            types: JSON.parse(p.types),
-            abilities: JSON.parse(p.abilities)
-          }));
-          resolve(pokemon);
+          resolve(rows._array);
         },
         (_, error) => {
-          console.error('Error getting all pokemon:', error);
+          console.error('Error getting all users:', error);
+          reject(error);
+        }
+      );
+    });
+  });
+};
+export const deleteUser = (userId) => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        'DELETE FROM users WHERE id = ?;',
+        [userId],
+        (_, result) => {
+          console.log('User deleted:', userId);
+          resolve(result.rowsAffected);
+        },
+        (_, error) => {
+          console.error('Error deleting user:', error);
           reject(error);
         }
       );

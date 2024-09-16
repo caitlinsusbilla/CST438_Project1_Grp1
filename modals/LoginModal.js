@@ -1,49 +1,92 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, TextInput, Button, StyleSheet } from 'react-native';
+import { View, Text, Modal, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { createUser, loginUser } from '../utils/database';
 
-
-export default function LoginModal({ modalVisible, setModalVisible }) {
+export default function LoginModal({ modalVisible, setModalVisible, onLoginSuccess }) {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
 
-  const handleLogin = () => {
-    // TODO: Integrate with database
-    console.log('Username:', username);
-    console.log('Password:', password);
-    setModalVisible(false); // Close the modal after login
-  }
+  const handleSubmit = async () => {
+    if (isCreatingAccount) {
+      if (!username || !email || !password) {
+        Alert.alert('Error', 'Please fill in all fields');
+        return;
+      }
+      try {
+        await createUser(username, email, password);
+        Alert.alert('Success', 'Account created successfully');
+        setIsCreatingAccount(false);
+      } catch (error) {
+        Alert.alert('Error', 'Account already exists');
+        console.error(error);
+      }
+    } else {
+      if (!username || !password) {
+        Alert.alert('Error', 'Please enter both username and password');
+        return;
+      }
+      try {
+        const user = await loginUser(username, password);
+        if (user) {
+          onLoginSuccess(user);
+          setModalVisible(false);
+        } else {
+          Alert.alert('Error', 'Invalid username or password');
+        }
+      } catch (error) {
+        Alert.alert('Error', 'Failed to log in');
+        console.error(error);
+      }
+    }
+  };
 
-  return(<Modal
-    animationType="slide"
-    transparent={true}
-    visible={modalVisible}
-    onRequestClose={() => { // Closes on close button
-      setModalVisible(false);
-    }}
-  >
-
-    {/* Modal View */}
-    <View style={styles.modalContainer}>
-      <View style={styles.modalView}>
-        <Text style={styles.modalText}>Login</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Username"
-          onChangeText={setUsername}
-          value={username}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          secureTextEntry={true}
-          onChangeText={setPassword}
-          value={password}
-        />
-        <Button title="Submit" onPress={handleLogin} />
-        <Button title="Close" onPress={() => setModalVisible(false)} />
+  return (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalVisible}
+      onRequestClose={() => setModalVisible(false)}
+    >
+      <View style={styles.modalContainer}>
+        <View style={styles.modalView}>
+          <Text style={styles.modalText}>{isCreatingAccount ? 'Create Account' : 'Login'}</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Username"
+            placeholderTextColor="#999"
+            onChangeText={setUsername}
+            value={username}
+          />
+          {isCreatingAccount && (
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#999"
+              onChangeText={setEmail}
+              value={email}
+              keyboardType="email-address"
+            />
+          )}
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            placeholderTextColor="#999"
+            secureTextEntry={true}
+            onChangeText={setPassword}
+            value={password}
+          />
+          <Button title={isCreatingAccount ? 'Create Account' : 'Login'} onPress={handleSubmit} />
+          <Button
+            title={isCreatingAccount ? 'Switch to Login' : 'Create New Account'}
+            onPress={() => setIsCreatingAccount(!isCreatingAccount)}
+          />
+          <Button title="Close" onPress={() => setModalVisible(false)} />
+        </View>
       </View>
-    </View>
-  </Modal>);
+    </Modal>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -54,22 +97,34 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalView: {
-    width: 300,
-    padding: 20,
+    width: '80%',
     backgroundColor: 'white',
-    borderRadius: 10,
+    borderRadius: 20,
+    padding: 35,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5
   },
   modalText: {
-    fontSize: 18,
     marginBottom: 15,
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   input: {
+    height: 40,
     width: '100%',
-    borderColor: '#ccc',
+    borderColor: 'gray',
     borderWidth: 1,
-    padding: 10,
-    marginBottom: 10,
+    marginBottom: 20,
+    paddingLeft: 10,
     borderRadius: 5,
-  },
+    color: 'black',
+  }
 });

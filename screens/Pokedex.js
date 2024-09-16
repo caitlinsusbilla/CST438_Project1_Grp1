@@ -1,48 +1,49 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, Dimensions} from 'react-native';
-import { insertPokemon, getAllPokemon } from '../utils/database';
+import { View, Text, FlatList, Image, StyleSheet, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 
-const POKEMON_PER_PAGE = 60;
+const POKEMON_PER_PAGE = 20; // Adjusted to match PokeAPI's default limit
 const { width } = Dimensions.get('window');
 const COLUMN_WIDTH = width / 2;
 
 export default function Pokedex() {
   const [pokemon, setPokemon] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     fetchPokemon();
-  }, []);
+  }, [currentPage]);
 
   const fetchPokemon = async () => {
+    if (loading) return;
+    setLoading(true);
     try {
-      const localPokemon = await getAllPokemon();
-      if (localPokemon.length > 0) {
-        setPokemon(localPokemon);
-      } else {
-        const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=151');
-        const data = await response.json();
-        const pokemonDetails = await Promise.all(
-          data.results.map(async (p) => {
-            const detailResponse = await fetch(p.url);
-            const detail = await detailResponse.json();
-            const newPokemon = {
-              id: detail.id,
-              name: detail.name,
-              types: detail.types.map(t => t.type.name),
-              image: detail.sprites.front_default,
-              height: detail.height,
-              weight: detail.weight,
-              abilities: detail.abilities.map(a => a.ability.name)
-            };
-            await insertPokemon(newPokemon);
-            return newPokemon;
-          })
-        );
-        setPokemon(pokemonDetails);
-      }
+      const offset = (currentPage - 1) * POKEMON_PER_PAGE;
+      const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${POKEMON_PER_PAGE}&offset=${offset}`);
+      const data = await response.json();
+      setTotalCount(data.count);
+      
+      const pokemonDetails = await Promise.all(
+        data.results.map(async (p) => {
+          const detailResponse = await fetch(p.url);
+          const detail = await detailResponse.json();
+          return {
+            id: detail.id,
+            name: detail.name,
+            types: detail.types.map(t => t.type.name),
+            image: detail.sprites.front_default,
+            height: detail.height,
+            weight: detail.weight,
+            abilities: detail.abilities.map(a => a.ability.name)
+          };
+        })
+      );
+      setPokemon(pokemonDetails);
     } catch (error) {
       console.error('Error fetching Pokemon:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,35 +54,34 @@ export default function Pokedex() {
     </View>
   );
 
-  const paginatedPokemon = pokemon.slice(
-    (currentPage - 1) * POKEMON_PER_PAGE,
-    currentPage * POKEMON_PER_PAGE
-  );
-
-  const totalPages = Math.ceil(pokemon.length / POKEMON_PER_PAGE);
+  const totalPages = Math.ceil(totalCount / POKEMON_PER_PAGE);
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={paginatedPokemon}
-        renderItem={renderPokemonItem}
-        keyExtractor={(item) => item.id.toString()}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
+      ) : (
+        <FlatList
+          data={pokemon}
+          renderItem={renderPokemonItem}
+          keyExtractor={(item) => item.id.toString()}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
+        />
+      )}
       <View style={styles.paginationContainer}>
         <TouchableOpacity
           onPress={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-          disabled={currentPage === 1}
-          style={[styles.paginationButton, currentPage === 1 && styles.disabledButton]}
+          disabled={currentPage === 1 || loading}
+          style={[styles.paginationButton, (currentPage === 1 || loading) && styles.disabledButton]}
         >
           <Text>Previous</Text>
         </TouchableOpacity>
         <Text>{`Page ${currentPage} of ${totalPages}`}</Text>
         <TouchableOpacity
           onPress={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-          disabled={currentPage === totalPages}
-          style={[styles.paginationButton, currentPage === totalPages && styles.disabledButton]}
+          disabled={currentPage === totalPages || loading}
+          style={[styles.paginationButton, (currentPage === totalPages || loading) && styles.disabledButton]}
         >
           <Text>Next</Text>
         </TouchableOpacity>
@@ -139,5 +139,10 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.5,
+  },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
