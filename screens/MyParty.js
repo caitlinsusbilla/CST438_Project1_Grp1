@@ -48,7 +48,7 @@ export default function MyParty() {
 
   const renderPokemonItem = ({ item }) => (
     <View style={styles.pokemonItem}>
-      <Image source={{ uri: item.image }} style={styles.pokemonImage} />
+      <Image source={{ uri: item.image }} style={styles.pokemonImage} testID = "pokemon-image-1"/>
       <Text style={styles.pokemonName}>{item.name}</Text>
     </View>
 

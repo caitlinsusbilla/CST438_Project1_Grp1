@@ -23,25 +23,28 @@ export default function HomeScreen({ navigation }) {
     return (
         <View style={styles.container}>
             {!user ? (
-                <Button title="Sign In" onPress={openModal} color="#e92929" />
+                <Button title="Sign In" onPress={openModal} color="#e92929" testID = "SignIn"/>
             ) : (
                 <>
                     <Text style={styles.welcomeText}>Welcome, {user.username}!</Text>
                     <Button title="Go to Pokedex" onPress={() => navigation.navigate("Pokedex")} color="#e92929"/>
                     <Button title="Profile" onPress={() => navigation.navigate("Profile")} color="#e92929"/>
                     <Button title="My Party" onPress={() => navigation.navigate("MyParty")} color="#e92929"/>
-                    <Button title="Logout" onPress={handleLogout} color="#e92929" />
+                    <Button title="Logout" onPress={handleLogout} color="#e92929"/>
                 </>
             )}
             
             {/* Keep View Database button always visible */}
             <Button title="View Database" onPress={() => navigation.navigate("DatabaseView")} color="#4a90e2"/>
 
-            <LoginModal 
-                modalVisible={modalVisible} 
-                setModalVisible={setModalVisible} 
-                onLoginSuccess={handleLoginSuccess}
-            />
+            {modalVisible && (
+                <LoginModal 
+                    modalVisible={modalVisible}
+                    setModalVisible={setModalVisible}
+                    onLoginSuccess={handleLoginSuccess}
+                    testID="LoginModal"
+                />
+            )}
         </View>
     );
 }
