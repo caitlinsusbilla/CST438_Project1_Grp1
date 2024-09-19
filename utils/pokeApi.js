@@ -4,7 +4,10 @@ export const fetchPokemonList = async (limit = 20, offset = 0) => {
   try {
     const response = await fetch(`${BASE_URL}/pokemon?limit=${limit}&offset=${offset}`);
     const data = await response.json();
-    return data.results;
+    return {
+      results: data.results,
+      count: data.count
+    };
   } catch (error) {
     console.error('Error fetching Pokemon list:', error);
     throw error;
