@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, Text, Button, StyleSheet, Alert } from 'react-native';
 import LoginModal from '../modals/LoginModal';
 
@@ -33,7 +35,7 @@ export default function HomeScreen({ navigation }) {
                     <Button title="Logout" onPress={handleLogout} color="#e92929" />
                 </>
             )}
-            
+
             {/* Keep View Database button always visible */}
             <Button title="View Database" onPress={() => navigation.navigate("DatabaseView")} color="#4a90e2"/>
 
@@ -43,6 +45,7 @@ export default function HomeScreen({ navigation }) {
                 onLoginSuccess={handleLoginSuccess}
             />
         </View>
+        
     );
 }
 
