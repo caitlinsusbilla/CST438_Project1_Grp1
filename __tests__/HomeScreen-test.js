@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import HomeScreen from '../screens/HomeScreen';
-import { View } from 'react-native';
 
 jest.mock('../modals/LoginModal', () => {
   const { View } = require('react-native'); 
