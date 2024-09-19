@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Modal, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { createUser, loginUser } from '../utils/database';
+import { storeUserId } from '../utils/userUtils';
 
 export default function LoginModal({ modalVisible, setModalVisible, onLoginSuccess }) {
   const [username, setUsername] = useState('');
@@ -15,9 +16,12 @@ export default function LoginModal({ modalVisible, setModalVisible, onLoginSucce
         return;
       }
       try {
-        await createUser(username, email, password);
+        const userId = await createUser(username, email, password);
+        await storeUserId(userId);
         Alert.alert('Success', 'Account created successfully');
         setIsCreatingAccount(false);
+        onLoginSuccess({ id: userId, username, email });
+        setModalVisible(false);
       } catch (error) {
         Alert.alert('Error', 'Account already exists');
         console.error(error);
@@ -30,6 +34,7 @@ export default function LoginModal({ modalVisible, setModalVisible, onLoginSucce
       try {
         const user = await loginUser(username, password);
         if (user) {
+          await storeUserId(user.id);
           onLoginSuccess(user);
           setModalVisible(false);
         } else {
