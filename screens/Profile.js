@@ -1,71 +1,76 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Image, StyleSheet, Dimensions } from 'react-native';
-import { insertPokemon, getAllPokemon } from '../utils/database';
+import { getUserTeam, updateUserTeam } from '../utils/database';
+import { fetchPokemonDetails } from '../utils/pokeApi';
+import { getUserId } from '../utils/userUtils';
 
 const { width } = Dimensions.get('window');
-const COLUMN_WIDTH = width / 2;
+const SLOT_SIZE = width * 0.42;
 
-export default function Profile() {
-    const [pokemon, setPokemon] = useState([]);
-    const [currentPage, setCurrentPage] = useState(1);
+export default function Profile({ navigation }) {
+    const [team, setTeam] = useState(Array(6).fill(null));
 
-    useEffect(() => {
-        fetchPokemon();
-    }, []);
+  useEffect(() => {
+    fetchTeam();
 
-    const fetchPokemon = async () => {
-        try {
-            const localPokemon = await getAllPokemon();
-            if (localPokemon.length > 0) {
-                setPokemon(localPokemon.slice(0,6));
-            } else {
-                const response = await fetch('https://pokeapi.co/api/v2/pokemon?limit=6');
-                const data = await response.json();
-                const pokemonDetails = await Promise.all(
-                data.results.map(async (p) => {
-                    const detailResponse = await fetch(p.url);
-                    const detail = await detailResponse.json();
-                    const newPokemon = {
-                        id: detail.id,
-                        name: detail.name,
-                        types: detail.types.map(t => t.type.name),
-                        image: detail.sprites.front_default,
-                        height: detail.height,
-                        weight: detail.weight,
-                        abilities: detail.abilities.map(a => a.ability.name)
-                    };
-                    await insertPokemon(newPokemon);
-                    return newPokemon;
-                })
-            );
-            setPokemon(pokemonDetails);
-          }
-        } catch (error) {
-            console.error('Error fetching Pokemon:', error);
-        }
-    };
+    const unsubscribe = navigation.addListener('focus', () => {
+      fetchTeam();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
+
+  const fetchTeam = async () => {
+    try {
+      const userId = await getUserId();
+      if (userId) {
+        const userTeam = await getUserTeam(userId);
+        const teamWithDetails = await Promise.all(
+          userTeam.map(async (pokemonId) => {
+            if (pokemonId) {
+              return await fetchPokemonDetails(pokemonId);
+            }
+            return null;
+          })
+        );
+        setTeam(teamWithDetails);
+      } else {
+        console.error('User ID not found');
+        Alert.alert('Error', 'User not logged in. Please log in and try again.');
+      }
+    } catch (error) {
+      console.error('Error fetching team:', error);
+      Alert.alert('Error', 'Failed to fetch team. Please try again.');
+    }
+  };
     
-    const renderPokemonItem = ({ item }) => (
-        <View style={styles.pokemonItem}>
-            <Image source={{ uri: item.image }} style={styles.pokemonImage} />
-            <Text style={styles.pokemonName}>{item.name}</Text>
-        </View>
-    );
+  const renderPokemonSlot = (pokemon, index) => (
+    <View key={index} style={styles.pokemonSlot}>
+      {pokemon ? (
+        <>
+          <Image source={{ uri: pokemon.image }} style={styles.pokemonImage} />
+          <Text style={styles.pokemonName}>{pokemon.name}</Text>
+        </>
+      ) : (
+        <Image source={require('../assets/placeholder.png')} style={styles.placeholderImage} />
+      )}
+      <Text style={styles.slotNumber}>Slot {index + 1}</Text>
+    </View>
+  );
 
 
     return (
         <View style={styles.container}>
             <Text style={styles.username}>Username</Text>
-            <Text style={styles.bio}>Insert bio here{"\n"}Multiple lines yippie
-            </Text>
             <Text style={styles.subhead}>Username's Party</Text>
-            <FlatList
-            data={pokemon}
-            renderItem={renderPokemonItem}
-            keyExtractor={(item) => item.id.toString()}
-            numColumns={2}
-            columnWrapperStyle={styles.row}
-            />
+            <View style={styles.teamContainer}>
+                <View style={styles.column}>
+                    {team.slice(0, 3).map((pokemon, index) => renderPokemonSlot(pokemon, index))}
+                </View>
+                <View style={styles.column}>
+                    {team.slice(3, 6).map((pokemon, index) => renderPokemonSlot(pokemon, index + 3))}
+                </View>
+            </View>
         </View>
     );
 }
@@ -83,39 +88,58 @@ const styles = StyleSheet.create({
         fontSize: 30,
         fontWeight: 'bold',
         textAlign: 'center',
-        paddingBottom: 10,
+        paddingBottom: 50,
     },
-
-    bio: {
-        fontSize: 17,
-        lineHeight: 30,
-        textAlign: 'center',
-        paddingBottom: 10,
-    },
-    pokemonItem: {
-        width: COLUMN_WIDTH - 40,
+    teamContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
         alignItems: 'center',
-        marginBottom: 20,
-        backgroundColor: 'white',
+        flex: 1,
+      },
+      column: {
+        justifyContent: 'space-around',
+        height: '90%',
+      },
+      pokemonSlot: {
+        width: SLOT_SIZE,
+        height: SLOT_SIZE,
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
         borderRadius: 10,
         padding: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 3,
-    },
-    pokemonImage: {
-        width: 100,
-        height: 100,
+        marginVertical: 10,
+      },
+      pokemonImage: {
+        width: SLOT_SIZE * 0.7,
+        height: SLOT_SIZE * 0.7,
         resizeMode: 'contain',
-    },
-    pokemonName: {
-        marginTop: 10,
+      },
+      placeholderImage: {
+        width: SLOT_SIZE * 0.7,
+        height: SLOT_SIZE * 0.7,
+        resizeMode: 'contain',
+        opacity: 0.5,
+      },
+      pokemonName: {
+        marginTop: 5,
         textAlign: 'center',
         textTransform: 'capitalize',
         fontWeight: 'bold',
-    },
+        fontSize: 12,
+      },
+      slotNumber: {
+        position: 'absolute',
+        top: 5,
+        right: 5,
+        fontSize: 12,
+        color: '#888',
+      },
     subhead: {
         textTransform: 'uppercase',
         fontWeight: 'bold',
