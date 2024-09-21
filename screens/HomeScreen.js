@@ -57,7 +57,11 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.buttonContainer}>
               <Text style={styles.welcomeText}>Welcome, {user.username}!</Text>
               <CustomButton title="Go to Pokedex" onPress={() => navigation.navigate("Pokedex")} />
-              <CustomButton title="Profile" onPress={() => navigation.navigate("Profile")} />
+              <CustomButton title="My Profile" onPress={() => navigation.navigate("Profile", {
+                userId: user.id,
+                username: user.username,
+                userEmail: user.email,
+              })} />
               <CustomButton title="My Party" onPress={() => navigation.navigate("MyParty")} />
               <CustomButton title="Logout" onPress={handleLogout} color="#e92929" />
             </View>

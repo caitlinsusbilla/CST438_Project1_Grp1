@@ -141,7 +141,7 @@ export const getAllUsers = () => {
   return new Promise((resolve, reject) => {
     db.transaction(tx => {
       tx.executeSql(
-        'SELECT id, username FROM users;',
+        'SELECT id, username, email FROM users;',
         [],
         (_, { rows }) => {
           resolve(rows._array);

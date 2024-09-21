@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native';
 import { getAllUsers, deleteUser } from '../utils/database';
 
-export default function DatabaseViewScreen() {
+export default function DatabaseViewScreen({ navigation }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -54,12 +54,24 @@ export default function DatabaseViewScreen() {
         <Text style={styles.itemText}>{`Username: ${item.username}`}</Text>
         <Text style={styles.itemText}>{`Email: ${item.email}`}</Text>
       </View>
+      <View style={styles.buttonGroup}>
+      <TouchableOpacity
+        style={styles.profileButton}
+        onPress={() => navigation.navigate("Profile", {
+          userId: item.id,
+          username: item.username,
+          userEmail: item.email,
+        })}
+      >
+        <Text style={styles.buttonText}>View Profile</Text>
+      </TouchableOpacity>
       <TouchableOpacity
         style={styles.deleteButton}
         onPress={() => handleDeleteUser(item.id)}
       >
-        <Text style={styles.deleteButtonText}>Delete</Text>
+        <Text style={styles.buttonText}>Delete</Text>
       </TouchableOpacity>
+      </View>
     </View>
   );
 
@@ -117,6 +129,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  buttonGroup: {
+    flexDirection: 'row',
+  },
   itemText: {
     fontSize: 16,
   },
@@ -130,7 +145,13 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 5,
   },
-  deleteButtonText: {
+  profileButton: {
+    backgroundColor: '#4477ff',
+    padding: 8,
+    borderRadius: 5,
+    marginRight: 5,
+  },
+  buttonText: {
     color: 'white',
     fontWeight: 'bold',
   },
