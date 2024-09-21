@@ -2,12 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Image, StyleSheet, Dimensions } from 'react-native';
 import { getUserTeam, updateUserTeam } from '../utils/database';
 import { fetchPokemonDetails } from '../utils/pokeApi';
-import { getUserId } from '../utils/userUtils';
 
 const { width } = Dimensions.get('window');
 const SLOT_SIZE = width * 0.42;
 
-export default function Profile({ navigation }) {
+export default function Profile({ route, navigation }) {
     const [team, setTeam] = useState(Array(6).fill(null));
 
   useEffect(() => {
@@ -20,9 +19,10 @@ export default function Profile({ navigation }) {
     return unsubscribe;
   }, [navigation]);
 
+  const { userId, username, userEmail } = route.params;
+
   const fetchTeam = async () => {
     try {
-      const userId = await getUserId();
       if (userId) {
         const userTeam = await getUserTeam(userId);
         const teamWithDetails = await Promise.all(
@@ -61,8 +61,10 @@ export default function Profile({ navigation }) {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.username}>Username</Text>
-            <Text style={styles.subhead}>Username's Party</Text>
+            <Text style={styles.username}>{username}</Text>
+            <Text style={styles.bio}>Email me at {userEmail}!
+            </Text>
+            <Text style={styles.subhead}>{username}'s Party</Text>
             <View style={styles.teamContainer}>
                 <View style={styles.column}>
                     {team.slice(0, 3).map((pokemon, index) => renderPokemonSlot(pokemon, index))}
@@ -88,63 +90,69 @@ const styles = StyleSheet.create({
         fontSize: 30,
         fontWeight: 'bold',
         textAlign: 'center',
-        paddingBottom: 50,
+        paddingBottom: 10,
+    },
+    bio: {
+      fontSize: 17,
+      lineHeight: 30,
+      textAlign: 'center',
+      paddingBottom: 10,
     },
     teamContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        alignItems: 'center',
-        flex: 1,
-      },
-      column: {
-        justifyContent: 'space-around',
-        height: '90%',
-      },
-      pokemonSlot: {
-        width: SLOT_SIZE,
-        height: SLOT_SIZE,
-        backgroundColor: 'rgba(255, 255, 255, 0.8)',
-        borderRadius: 10,
-        padding: 10,
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
-        marginVertical: 10,
-      },
-      pokemonImage: {
-        width: SLOT_SIZE * 0.7,
-        height: SLOT_SIZE * 0.7,
-        resizeMode: 'contain',
-      },
-      placeholderImage: {
-        width: SLOT_SIZE * 0.7,
-        height: SLOT_SIZE * 0.7,
-        resizeMode: 'contain',
-        opacity: 0.5,
-      },
-      pokemonName: {
-        marginTop: 5,
-        textAlign: 'center',
-        textTransform: 'capitalize',
-        fontWeight: 'bold',
-        fontSize: 12,
-      },
-      slotNumber: {
-        position: 'absolute',
-        top: 5,
-        right: 5,
-        fontSize: 12,
-        color: '#888',
-      },
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      alignItems: 'baseline',
+      flex: 1,
+    },
+    column: {
+      justifyContent: 'space-around',
+      height: '90%',
+    },
+    pokemonSlot: {
+      width: SLOT_SIZE,
+      height: SLOT_SIZE,
+      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+      borderRadius: 10,
+      padding: 10,
+      alignItems: 'center',
+      justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+      marginVertical: 10,
+    },
+    pokemonImage: {
+      width: SLOT_SIZE * 0.7,
+      height: SLOT_SIZE * 0.7,
+      resizeMode: 'contain',
+    },
+    placeholderImage: {
+      width: SLOT_SIZE * 0.7,
+      height: SLOT_SIZE * 0.7,
+      resizeMode: 'contain',
+      opacity: 0.5,
+    },
+    pokemonName: {
+      marginTop: 5,
+      textAlign: 'center',
+      textTransform: 'capitalize',
+      fontWeight: 'bold',
+      fontSize: 12,
+    },
+    slotNumber: {
+      position: 'absolute',
+      top: 5,
+      right: 5,
+      fontSize: 12,
+      color: '#888',
+    },
     subhead: {
-        textTransform: 'uppercase',
-        fontWeight: 'bold',
-        color: '#222',
-        paddingVertical: 10,
-        paddingLeft: 7,
+      textTransform: 'uppercase',
+      fontWeight: 'bold',
+      color: '#222',
+      paddingVertical: 10,
+      paddingLeft: 7,
     },
 })
